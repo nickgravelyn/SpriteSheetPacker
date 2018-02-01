@@ -525,8 +525,9 @@ namespace sspack
 		/// <returns> Printable string containing a user friendly description of command line arguments. </returns>
 		public static string ArgumentsUsage(Type argumentType)
 		{
-			int screenWidth = Parser.GetConsoleWindowWidth();
-			if (screenWidth == 0)
+			int screenWidth;
+			screenWidth = Parser.GetConsoleWindowWidth();
+			if (screenWidth <= 0)
 				screenWidth = 80;
 			return ArgumentsUsage(argumentType, screenWidth);
 		}
@@ -584,8 +585,12 @@ namespace sspack
 			CONSOLE_SCREEN_BUFFER_INFO csbi = new CONSOLE_SCREEN_BUFFER_INFO();
 
 			int rc;
-			rc = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), ref csbi);
-			screenWidth = csbi.dwSize.x;
+			try {
+				rc = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), ref csbi);
+				screenWidth = csbi.dwSize.x;
+			} catch (System.EntryPointNotFoundException) {
+				screenWidth = 0;
+			}
 			return screenWidth;
 		}
 
