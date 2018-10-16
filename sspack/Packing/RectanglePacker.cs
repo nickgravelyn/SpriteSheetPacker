@@ -24,7 +24,6 @@
 
 #endregion
 
-using System.Drawing;
 
 namespace sspack
 {

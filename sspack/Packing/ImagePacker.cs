@@ -26,8 +26,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
+using UnityEditor;
+using UnityEngine;
 
 namespace sspack
 {
@@ -66,7 +66,7 @@ namespace sspack
 			int maximumHeight,
 			int imagePadding,
 			bool generateMap,
-			out Bitmap outputImage, 
+			out Texture2D outputImage, 
 			out Dictionary<string, Rectangle> outputMap)
 		{
 			files = new List<string>(imageFiles);
@@ -86,10 +86,12 @@ namespace sspack
 			// get the sizes of all the images
 			foreach (var image in files)
 			{
-				Bitmap bitmap = Bitmap.FromFile(image) as Bitmap;
-				if (bitmap == null)
-					return (int)FailCode.FailedToLoadImage;
-				imageSizes.Add(image, bitmap.Size);
+				// path example "Assets/image.png"
+				Texture2D texture2D = (Texture2D)AssetDatabase.LoadAssetAtPath(image, typeof(Texture2D));  
+				if (texture2D == null)
+					Debug.LogError("Failed to load image from asset path: " + image);
+				
+				imageSizes.Add(image, new Size(texture2D.width, texture2D.height));
 			}
 
 			// sort our files by file size so we place large sprites first
@@ -282,25 +284,25 @@ namespace sspack
 			return true;
 		}
 
-		private Bitmap CreateOutputImage()
+		private Texture2D CreateOutputImage()
 		{
 			try
 			{
-				Bitmap outputImage = new Bitmap(outputWidth, outputHeight, PixelFormat.Format32bppArgb);
+				Texture2D outputImage = new Texture2D(outputWidth, outputHeight, TextureFormat.ARGB32, false, false);
 
 				// draw all the images into the output image
 				foreach (var image in files)
 				{
 					Rectangle location = imagePlacement[image];
-					Bitmap bitmap = Bitmap.FromFile(image) as Bitmap;
-					if (bitmap == null)
+					Texture2D texture2D = (Texture2D)AssetDatabase.LoadAssetAtPath(image, typeof(Texture2D));
+					if (texture2D == null)
 						return null;
 
 					// copy pixels over to avoid antialiasing or any other side effects of drawing
 					// the subimages to the output image using Graphics
-					for (int x = 0; x < bitmap.Width; x++)
-						for (int y = 0; y < bitmap.Height; y++)
-							outputImage.SetPixel(location.X + x, location.Y + y, bitmap.GetPixel(x, y));
+					for (int x = 0; x < texture2D.width; x++)
+						for (int y = 0; y < texture2D.height; y++)
+							outputImage.SetPixel(location.X + x, location.Y + y, texture2D.GetPixel(x, y));
 				}
 
 				return outputImage;
